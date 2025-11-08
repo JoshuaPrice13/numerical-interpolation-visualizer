@@ -1,174 +1,292 @@
+/*
+Joshua Thomas Price
+Oklahoma State University
+CS-3513 (Numerical Methods for Digital Computing)
+11-07-2025
+-----------
+Project 3, NIV_Model
+What is this program for?
 
+This model handles all the computational logic for polynomial interpolation
+using Chebyshev nodes. It acts as the intermediary between the GUI and the
+ChebyshevInterpolation class.
+*/
 
 public class NIV_Model {
     
-    public static final int MAX_ITERATIONS = 100000;
-    public static final double TOLERANCE = 1e-12;
+    private static final double DEFAULT_X_MIN = -1.0;
+    private static final double DEFAULT_X_MAX = 1.0;
+    private static final double DEFAULT_Y_MIN = -5.0;
+    private static final double DEFAULT_Y_MAX = 5.0;
+    private static final int DEFAULT_NUM_POINTS = 5;
     
-    public static double f(double co1, double co2, double co3, double x){
-        double tmp = co1 * Math.exp(co2 * x) - (co3 * Math.cos(x));
-        return tmp;
-    }
-
-    // Derivative for y=a*ebx−(c*cos(x))
-    public static double fprime(double co1, double co2, double co3, double x){
-        double tmp = co1 * co2 * Math.exp(co2 * x) + (co3 * Math.sin(x));
-        return tmp;
+    private double mergeThreshold;
+    private ChebyshevInterpolation.ChebyshevResult currentResult;
+    
+    public NIV_Model() {
+        this.mergeThreshold = 0.1;
     }
     
-    public double Bisection(double co1, double co2, double co3, float ig1, float ig2){
-        
-        double min = Math.min(ig1, ig2);
-        double max = Math.max(ig1, ig2);
-        
-        double fMin = f(co1, co2, co3, min);
-        double fMax = f(co1, co2, co3, max);
-        
-        if (fMin * fMax >= 0) {
-            System.out.println("Initial guesses do not bracket a root");
-            return 0;
+    /**
+     * Performs Chebyshev interpolation with the given parameters.
+     * 
+     * @param numPoints Number of data points to generate
+     * @param xMin Minimum x value for domain
+     * @param xMax Maximum x value for domain
+     * @param yMin Minimum y value for range
+     * @param yMax Maximum y value for range
+     * @return ChebyshevResult containing data points and interpolation curve
+     */
+    public ChebyshevInterpolation.ChebyshevResult performInterpolation(
+        int numPoints, double xMin, double xMax, double yMin, double yMax) {
+    
+        if (numPoints < 3 || numPoints > 9) {
+            throw new IllegalArgumentException("Number of points must be between 3 and 9");
+        }
+        if (xMin >= xMax || yMin >= yMax) {
+            throw new IllegalArgumentException("Invalid range: min must be less than max");
         }
         
-        int iterations = 0;
-        double mid = 0;
+        currentResult = ChebyshevInterpolation.performInterpolation(
+            numPoints, xMin, xMax, yMin, yMax);
         
-        while (iterations < MAX_ITERATIONS) {
-            iterations++;
-            
-            // 2. Solve the equation at the midpoint between max and min.
-            mid = (min + max) / 2.0;
-            double fMid = f(co1, co2, co3, mid);
-            
-            // 3. Is the solution 0, or close to 0?  That's probably the root.
-            if (Math.abs(fMid) <= TOLERANCE) {
-                //System.out.println("Root found at: " + mid + " after " + iterations + " iterations");
-                return mid;
-            }
-            
-            // 5. are max and min arbitrarily close?  Then the root might be between them!
-            if (Math.abs(max - min) <= TOLERANCE) {
-                //System.out.println("Root approximated at: " + mid + " after " + iterations + " iterations");
-                return mid;
-            }
-            
-            // 4. Replace the max or min that is the same sign as f(mid).
-            if (fMid * fMin < 0) {
-                max = mid;
-                fMax = fMid;
-            } else {
-                min = mid;
-                fMin = fMid;
-            }
+        double[][] mergedPoints = mergeClosePoints(currentResult.dataPoints);
+        
+        if (mergedPoints.length != currentResult.dataPoints.length) {
+            currentResult = ChebyshevInterpolation.performInterpolationWithPoints(
+                mergedPoints, xMin, xMax);
         }
         
-        //System.out.println("Max iterations reached. Best approximation: " + mid);
-        return mid;
+        return currentResult;
+    }
+    
+    /**
+     * Performs interpolation with default parameters.
+     * 
+     * @return ChebyshevResult with default parameters
+     */
+    public ChebyshevInterpolation.ChebyshevResult performDefaultInterpolation() {
+        return performInterpolation(
+            DEFAULT_NUM_POINTS, 
+            DEFAULT_X_MIN, 
+            DEFAULT_X_MAX, 
+            DEFAULT_Y_MIN, 
+            DEFAULT_Y_MAX
+        );
+    }
+    
+    /**
+     * Performs interpolation with a random number of points between 6 and 8.
+     * 
+     * @return ChebyshevResult with random number of points
+     */
+    public ChebyshevInterpolation.ChebyshevResult performRandomInterpolation() {
+        java.util.Random random = new java.util.Random();
+        int numPoints = 6 + random.nextInt(3);
+        
+        return performInterpolation(
+            numPoints,
+            DEFAULT_X_MIN,
+            DEFAULT_X_MAX,
+            DEFAULT_Y_MIN,
+            DEFAULT_Y_MAX
+        );
     }
 
-    public double InverseQuadratic(double co1, double co2, double co3, float ig1, float ig2){
-        
-        // 1. Make three guesses where might be close to the root -> x.
-        double x0 = ig1;
-        double x1 = ig2;
-        double x2 = (ig1 + ig2) / 2.0;
-        
-        int iterations = 0;
-        
-        while (iterations < MAX_ITERATIONS) {
-            iterations++;
-            
-            // 2. Solve the equation at all x.
-            double f0 = f(co1, co2, co3, x0);
-            double f1 = f(co1, co2, co3, x1);
-            double f2 = f(co1, co2, co3, x2);
-            
-            // 3. Is the solution 0, or close to 0?  That's probably the root.
-            if (Math.abs(f2) < TOLERANCE) {
-                //System.out.println("Root found at: " + x2 + " after " + iterations + " iterations");
-                return x2;
-            }
-            
-            // 4. Find a parabola that goes through the three points (f(x),x)
-            // 5. Find the root of the parabola and set the x value to nextX/
-            // 6. This is just the quadratic equation.
-            double L0 = (x0 * f1 * f2) / ((f0 - f1) * (f0 - f2));
-            double L1 = (x1 * f0 * f2) / ((f1 - f0) * (f1 - f2));
-            double L2 = (x2 * f0 * f1) / ((f2 - f0) * (f2 - f1));
-            
-            double nextX = L0 + L1 + L2;
-            
-            // 7. Is nextX close to x?  Then the root might be between them!  If not, set one of the current x (I assume x, but I'm not getting any guaranty) to nextX.
-            if (Math.abs(nextX - x2) < TOLERANCE) {
-                System.out.println("Root approximated at: " + nextX + " after " + iterations + " iterations");
-                return nextX;
-            }
-            
-            x0 = x1;
-            x1 = x2;
-            x2 = nextX;
+    /**
+     * Merges points that are closer than the threshold distance using Euclidean distance.
+     * When two points are close, they are replaced with their average.
+     * 
+     * @param points Original data points
+     * @return Merged data points with close points averaged
+     */
+    public double[][] mergeClosePoints(double[][] points) {
+        if (points == null || points.length == 0) {
+            return points;
         }
         
-        //System.out.println("Max iterations reached. Best approximation: " + x2);
-        return x2;
+        java.util.ArrayList<double[]> mergedList = new java.util.ArrayList<>();
+        boolean[] merged = new boolean[points.length];
+        
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("Point Merging Analysis");
+        System.out.println("=".repeat(50));
+        System.out.println("Merge threshold: " + mergeThreshold);
+        System.out.println("Original number of points: " + points.length);
+        
+        for (int i = 0; i < points.length; i++) {
+            if (merged[i]) {
+                continue;
+            }
+            
+            double sumX = points[i][0];
+            double sumY = points[i][1];
+            int count = 1;
+            
+            for (int j = i + 1; j < points.length; j++) {
+                if (merged[j]) {
+                    continue;
+                }
+                
+                double dx = points[i][0] - points[j][0];
+                double dy = points[i][1] - points[j][1];
+                double distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < mergeThreshold) {
+                    System.out.printf("Merging points: (%.4f, %.4f) and (%.4f, %.4f) - Distance: %.4f\n",
+                        points[i][0], points[i][1], points[j][0], points[j][1], distance);
+                    
+                    sumX += points[j][0];
+                    sumY += points[j][1];
+                    count++;
+                    merged[j] = true;
+                }
+            }
+            
+            double avgX = sumX / count;
+            double avgY = sumY / count;
+            mergedList.add(new double[]{avgX, avgY});
+            
+            if (count > 1) {
+                System.out.printf("Created averaged point: (%.4f, %.4f) from %d points\n", avgX, avgY, count);
+            }
+        }
+        
+        System.out.println("Final number of points after merging: " + mergedList.size());
+        System.out.println("=".repeat(50) + "\n");
+        
+        return mergedList.toArray(new double[0][]);
     }
 
-    public double RegulaFalsi(double co1, double co2, double co3, float ig1, float ig2){
+    /**
+     * Tests multiple polynomial orders to find the best fit.
+     * Fits lower-order polynomials as approximations to the full dataset.
+     * 
+     * @param dataPoints Data points to interpolate
+     * @param minOrder Minimum polynomial order to test
+     * @param maxOrder Maximum polynomial order to test
+     * @param xMin Minimum x for curve generation
+     * @param xMax Maximum x for curve generation
+     * @return Array of ChebyshevResults for each order tested
+     */
+    public ChebyshevInterpolation.ChebyshevResult[] testMultipleOrders(
+            double[][] dataPoints, int minOrder, int maxOrder, double xMin, double xMax) {
         
-        // Step 1: Choose two initial points a and b such that function at those points have opposite sign i.e., f(a)⋅f(b) < 0.
-        double a = ig1;
-        double b = ig2;
-        
-        double fa = f(co1, co2, co3, a);
-        double fb = f(co1, co2, co3, b);
-        
-        if (fa * fb >= 0) {
-            System.out.println("Initial guesses do not bracket a root");
-            return 0;
+        if (dataPoints == null || dataPoints.length < 2) {
+            throw new IllegalArgumentException("Need at least 2 points for interpolation");
+        }
+        if (minOrder < 1) {
+            minOrder = 1;
+        }
+        if (maxOrder >= dataPoints.length) {
+            maxOrder = dataPoints.length - 1;
+        }
+        if (minOrder > maxOrder) {
+            throw new IllegalArgumentException("Min order must be <= max order");
         }
         
-        int iterations = 0;
-        double c = 0;
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("Testing Multiple Polynomial Orders");
+        System.out.println("=".repeat(50));
+        System.out.println("Testing orders from " + minOrder + " to " + maxOrder);
+        System.out.println("Number of data points: " + dataPoints.length);
         
-        while (iterations < MAX_ITERATIONS) {
-            iterations++;
+        int numOrders = maxOrder - minOrder + 1;
+        ChebyshevInterpolation.ChebyshevResult[] results = new ChebyshevInterpolation.ChebyshevResult[numOrders];
+        
+        for (int order = minOrder; order <= maxOrder; order++) {
+            int numPointsForOrder = order + 1;
+            double[][] selectedPoints = selectBestPointsForOrder(dataPoints, numPointsForOrder);
             
-            // Step 2: Calculate the point c where the linear approximation intersects the x-axis using the formula.
-            c = a - fa * (b - a) / (fb - fa);
+            results[order - minOrder] = ChebyshevInterpolation.performInterpolationWithPoints(
+                selectedPoints, xMin, xMax);
             
-            // Step 3: Determine f(c).
-            double fc = f(co1, co2, co3, c);
+            double error = calculateApproximationError(dataPoints, results[order - minOrder]);
             
-            // Step 4: Repeat the steps until ∣f(c)∣ is less than a predefined tolerance level or the interval [a, b] is sufficiently small.
-            if (Math.abs(fc) <= TOLERANCE || Math.abs(b - a) <= TOLERANCE) {
-                //System.out.println("Root found at: " + c + " after " + iterations + " iterations");
-                return c;
-            }
-            
-            // If f(c) ⋅ f(a) < 0, then the root lies between a and c. Set b = c.
-            if (fc * fa < 0) {
-                b = c;
-                fb = fc;
-            }
-            // If f(c) ⋅ f(b) < 0, then the root lies between b and c. Set a = c.
-            else {
-                a = c;
-                fa = fc;
-            }
+            System.out.printf("Order %d: Using %d points, Approximation error: %.6f\n", 
+                            order, numPointsForOrder, error);
         }
         
-        //System.out.println("Max iterations reached. Best approximation: " + c);
-        return c;
+        System.out.println("=".repeat(50) + "\n");
+        
+        return results;
     }
 
-    public double BruteForce(double co1, double co2, double co3, float ig1, float ig2) {
-        float step = 0.00001f;
-        for (double x = ig1; x <= ig2; x += step) {
-            double fx = f(co1, co2, co3, x);
-            double fxNext = f(co1, co2, co3, x + step);
-            if (fx * fxNext <= 0) {
-                return x;
-            }
+    /**
+     * Selects the best subset of points for a given polynomial order.
+     * Uses evenly distributed points from the dataset.
+     * 
+     * @param allPoints All available data points
+     * @param numPointsNeeded Number of points needed for the order
+     * @return Selected subset of points
+     */
+    private double[][] selectBestPointsForOrder(double[][] allPoints, int numPointsNeeded) {
+        if (numPointsNeeded >= allPoints.length) {
+            return allPoints;
         }
-        throw new ArithmeticException("Root not found in the interval");
+        
+        double[][] selected = new double[numPointsNeeded][2];
+        
+        for (int i = 0; i < numPointsNeeded; i++) {
+            int index = (int) Math.round(i * (allPoints.length - 1.0) / (numPointsNeeded - 1.0));
+            selected[i] = allPoints[index];
+        }
+        
+        return selected;
+    }
+
+    /**
+     * Calculates the approximation error of a polynomial fit.
+     * Measures how well the polynomial approximates all original data points.
+     * 
+     * @param originalPoints All original data points
+     * @param result The interpolation result to evaluate
+     * @return Root mean square error across all points
+     */
+    private double calculateApproximationError(double[][] originalPoints, 
+                                            ChebyshevInterpolation.ChebyshevResult result) {
+        double sumSquaredError = 0.0;
+        
+        for (int i = 0; i < originalPoints.length; i++) {
+            double x = originalPoints[i][0];
+            double yActual = originalPoints[i][1];
+            double yPredicted = ChebyshevInterpolation.lagrangeInterpolation(result.dataPoints, x);
+            double error = yActual - yPredicted;
+            sumSquaredError += error * error;
+        }
+        
+        return Math.sqrt(sumSquaredError / originalPoints.length);
+    }
+    
+    //--------------- Getters and Setters ----------------
+
+    /**
+     * Sets the threshold distance for merging close points.
+     * 
+     * @param threshold Distance threshold for point merging
+     */
+    public void setMergeThreshold(double threshold) {
+        if (threshold < 0) {
+            throw new IllegalArgumentException("Threshold must be non-negative");
+        }
+        this.mergeThreshold = threshold;
+    }
+    
+    /**
+     * Gets the current merge threshold.
+     * 
+     * @return Current threshold value
+     */
+    public double getMergeThreshold() {
+        return mergeThreshold;
+    }
+    
+    /**
+     * Gets the most recent interpolation result.
+     * 
+     * @return Current ChebyshevResult or null if no interpolation performed yet
+     */
+    public ChebyshevInterpolation.ChebyshevResult getCurrentResult() {
+        return currentResult;
     }
 }

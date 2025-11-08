@@ -65,45 +65,6 @@ public class GraphPanel extends JPanel {
         plot.setRenderer(renderer);
     }
     
-    /**
-     * Adds sample data to demonstrate the graph functionality.
-     * This method should be replaced with actual data from your Chebyshev program.
-     */
-    private void addSampleData() {
-        // Create a series for original data points (scatter plot)
-        XYSeries dataPoints = new XYSeries("Data Points");
-        dataPoints.add(0.0, 1.0);
-        dataPoints.add(1.0, 2.0);
-        dataPoints.add(2.0, 1.5);
-        dataPoints.add(3.0, 3.0);
-        dataPoints.add(4.0, 2.5);
-        
-        dataset.addSeries(dataPoints);
-        
-        // Create a series for a sample polynomial curve
-        XYSeries polynomialCurve = new XYSeries("Polynomial (Order 2)");
-        for (double x = 0.0; x <= 4.0; x += 0.1) {
-            // Sample polynomial: y = 0.5x^2 - 0.5x + 1.5
-            double y = 0.5 * x * x - 0.5 * x + 1.5;
-            polynomialCurve.add(x, y);
-        }
-        
-        dataset.addSeries(polynomialCurve);
-        
-        // Configure renderer for different series styles
-        XYPlot plot = chart.getXYPlot();
-        XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-        
-        // Series 0 (data points): show shapes, no lines
-        renderer.setSeriesLinesVisible(0, false);
-        renderer.setSeriesShapesVisible(0, true);
-        renderer.setSeriesPaint(0, Color.BLUE);
-        
-        // Series 1 (polynomial): show lines, no shapes
-        renderer.setSeriesLinesVisible(1, true);
-        renderer.setSeriesShapesVisible(1, false);
-        renderer.setSeriesPaint(1, Color.RED);
-    }
     
     /**
      * Clears all data from the chart.
@@ -148,17 +109,87 @@ public class GraphPanel extends JPanel {
         chart.setTitle(title);
     }
     
+
     /**
-     * Main method for testing the GraphPanel independently.
+     * Displays Chebyshev interpolation results on the chart.
+     * 
+     * @param result ChebyshevResult containing data points and curve points
      */
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Graph Panel Test");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.add(new GraphPanel());
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
+    public void displayChebyshevResult(ChebyshevInterpolation.ChebyshevResult result) {
+        clearData();
+        
+        double[] dataX = new double[result.dataPoints.length];
+        double[] dataY = new double[result.dataPoints.length];
+        for (int i = 0; i < result.dataPoints.length; i++) {
+            dataX[i] = result.dataPoints[i][0];
+            dataY[i] = result.dataPoints[i][1];
+        }
+        
+        double[] curveX = new double[result.curvePoints.length];
+        double[] curveY = new double[result.curvePoints.length];
+        for (int i = 0; i < result.curvePoints.length; i++) {
+            curveX[i] = result.curvePoints[i][0];
+            curveY[i] = result.curvePoints[i][1];
+        }
+        
+        addSeries("Data Points", dataX, dataY, false, true);
+        addSeries("Polynomial (Order " + result.polynomialOrder + ")", curveX, curveY, true, false);
+        
+        XYPlot plot = chart.getXYPlot();
+        XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, Color.BLUE);
+        renderer.setSeriesPaint(1, Color.RED);
+    }
+
+    private void addSampleData() {
+        NIV_Model model = new NIV_Model();
+        ChebyshevInterpolation.ChebyshevResult result = model.performRandomInterpolation();
+        displayChebyshevResult(result);
+    }
+
+    /**
+     * Displays multiple polynomial orders on the same chart.
+     * 
+     * @param results Array of ChebyshevResults for different orders
+     * @param allDataPoints All original data points to display
+     */
+    public void displayMultipleOrders(ChebyshevInterpolation.ChebyshevResult[] results, double[][] allDataPoints) {
+        clearData();
+        
+        if (results == null || results.length == 0) {
+            return;
+        }
+        
+        double[] dataX = new double[allDataPoints.length];
+        double[] dataY = new double[allDataPoints.length];
+        for (int i = 0; i < allDataPoints.length; i++) {
+            dataX[i] = allDataPoints[i][0];
+            dataY[i] = allDataPoints[i][1];
+        }
+        
+        addSeries("Data Points", dataX, dataY, false, true);
+        
+        Color[] colors = {Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.MAGENTA, Color.CYAN};
+        
+        for (int i = 0; i < results.length; i++) {
+            ChebyshevInterpolation.ChebyshevResult result = results[i];
+            
+            double[] curveX = new double[result.curvePoints.length];
+            double[] curveY = new double[result.curvePoints.length];
+            for (int j = 0; j < result.curvePoints.length; j++) {
+                curveX[j] = result.curvePoints[j][0];
+                curveY[j] = result.curvePoints[j][1];
+            }
+            
+            addSeries("Order " + result.polynomialOrder, curveX, curveY, true, false);
+            
+            XYPlot plot = chart.getXYPlot();
+            XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+            renderer.setSeriesPaint(i + 1, colors[i % colors.length]);
+        }
+        
+        XYPlot plot = chart.getXYPlot();
+        XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, Color.BLACK);
     }
 }
