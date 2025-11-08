@@ -1,0 +1,10 @@
+{
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-25",
+            "path": "C:\\Users\\jpric\\Downloads\\graalvm-jdk-25_windows-x64_bin\\graalvm-jdk-25+37.1",
+            "default": true
+        }
+    ],
+    "java.compile.nullAnalysis.mode": "automatic"
+}
