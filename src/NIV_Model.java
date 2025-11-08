@@ -8,7 +8,7 @@ Project 3, NIV_Model
 What is this program for?
 
 This model handles all the computational logic for polynomial interpolation
-using Chebyshev nodes. It acts as the intermediary between the GUI and the
+using Chebyshev nodes. It acts as the middle-man between the GUI and the
 ChebyshevInterpolation class.
 */
 
@@ -28,13 +28,11 @@ public class NIV_Model {
     }
     
     /**
-     * Performs Chebyshev interpolation with the given parameters.
-     * 
      * @param numPoints Number of data points to generate
-     * @param xMin Minimum x value for domain
-     * @param xMax Maximum x value for domain
-     * @param yMin Minimum y value for range
-     * @param yMax Maximum y value for range
+     * @param xMin
+     * @param xMax
+     * @param yMin
+     * @param yMax
      * @return ChebyshevResult containing data points and interpolation curve
      */
     public ChebyshevInterpolation.ChebyshevResult performInterpolation(
@@ -61,7 +59,7 @@ public class NIV_Model {
     }
     
     /**
-     * Performs interpolation with default parameters.
+     * Does interpolation with default parameters.
      * 
      * @return ChebyshevResult with default parameters
      */
@@ -76,7 +74,7 @@ public class NIV_Model {
     }
     
     /**
-     * Performs interpolation with a random number of points between 6 and 8.
+     * Does interpolation with a random number of points between 6 and 8.
      * 
      * @return ChebyshevResult with random number of points
      */
@@ -165,8 +163,8 @@ public class NIV_Model {
      * @param dataPoints Data points to interpolate
      * @param minOrder Minimum polynomial order to test
      * @param maxOrder Maximum polynomial order to test
-     * @param xMin Minimum x for curve generation
-     * @param xMax Maximum x for curve generation
+     * @param xMin
+     * @param xMax
      * @return Array of ChebyshevResults for each order tested
      */
     public ChebyshevInterpolation.ChebyshevResult[] testMultipleOrders(
@@ -237,7 +235,7 @@ public class NIV_Model {
 
     /**
      * Calculates the approximation error of a polynomial fit.
-     * Measures how well the polynomial approximates all original data points.
+     * Sees how well the polynomial approximates all original data points.
      * 
      * @param originalPoints All original data points
      * @param result The interpolation result to evaluate

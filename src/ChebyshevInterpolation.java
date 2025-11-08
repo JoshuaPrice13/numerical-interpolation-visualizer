@@ -284,7 +284,7 @@ public class ChebyshevInterpolation {
         if (numPoints < 6 || numPoints > 8) {
             throw new IllegalArgumentException("Number of points must be between 6 and 8");
         }
-        // Compute Chebyshev nodes
+       
         double[] chebyshevNodes = computeChebyshevNodes(numPoints, xMin, xMax);
         
         // Generate data points at Chebyshev nodes
@@ -295,10 +295,10 @@ public class ChebyshevInterpolation {
             dataPoints[i][1] = yMin + (yMax - yMin) * random.nextDouble();
         }
         
-        // Sort points by x-coordinate
+        // Sort by x-coordinate
         Arrays.sort(dataPoints, (a, b) -> Double.compare(a[0], b[0]));
         
-        // Generate interpolation curve points (dense sampling for smooth curve)
+        // Generate interpolation curve points
         int numCurvePoints = 200;
         double[][] curvePoints = new double[numCurvePoints][2];
         for (int i = 0; i < numCurvePoints; i++) {
@@ -313,12 +313,13 @@ public class ChebyshevInterpolation {
 
     /**
      * Inner class to hold the results of Chebyshev interpolation.
-     * This makes it easy to pass all necessary data to the GUI.
+     * I usually don't do innner classes but this one is small and
+     * makes it easy to pass all necessary data to the GUI.
      */
     public static class ChebyshevResult {
-        public final double[][] dataPoints;      // Original data points
-        public final double[][] curvePoints;     // Points for drawing smooth curve
-        public final int polynomialOrder;        // Degree of polynomial
+        public final double[][] dataPoints;
+        public final double[][] curvePoints;
+        public final int polynomialOrder; 
         
         public ChebyshevResult(double[][] dataPoints, double[][] curvePoints, int polynomialOrder) {
             this.dataPoints = dataPoints;

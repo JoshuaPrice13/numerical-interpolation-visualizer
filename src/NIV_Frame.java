@@ -35,10 +35,7 @@ public class NIV_Frame extends JFrame{
         int maxOrder = numMergedPoints - 1;
         int minOrder = 1;
         
-        ChebyshevInterpolation.ChebyshevResult[] multipleResults = 
-            model.testMultipleOrders(mergedPoints, minOrder, maxOrder, -1.0, 1.0);
-        
-       // model.printInterpolationExplanation(multipleResults, numOriginalPoints, numMergedPoints);
+        ChebyshevInterpolation.ChebyshevResult[] multipleResults = model.testMultipleOrders(mergedPoints, minOrder, maxOrder, -1.0, 1.0);
         
         graphPanel.displayMultipleOrders(multipleResults, mergedPoints);
     }

@@ -9,11 +9,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Custom panel that displays a 2D graph using JFreeChart.
- * This panel can display multiple data series including scatter plots
- * and line plots for polynomial interpolation visualization.
- */
+
 public class GraphPanel extends JPanel {
     
     private XYSeriesCollection dataset;
@@ -26,10 +22,9 @@ public class GraphPanel extends JPanel {
     public GraphPanel() {
         setLayout(new BorderLayout());
         
-        // Initialize the dataset
+        
         dataset = new XYSeriesCollection();
         
-        // Create the chart
         chart = ChartFactory.createXYLineChart(
             "Polynomial Interpolation",  // Chart title
             "X",                          // X-axis label
@@ -37,34 +32,23 @@ public class GraphPanel extends JPanel {
             dataset                       // Dataset
         );
         
-        // Customize the chart appearance
-        customizeChart();
+        XYPlot plot = chart.getXYPlot();
+        
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+        
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+        plot.setRenderer(renderer);
         
         // Create the chart panel and add it to this panel
         chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new Dimension(800, 600));
         add(chartPanel, BorderLayout.CENTER);
         
-        // Add sample data for demonstration
+        // Add sample data
         addSampleData();
     }
-    
-    /**
-     * Customizes the appearance of the chart.
-     */
-    private void customizeChart() {
-        XYPlot plot = chart.getXYPlot();
-        
-        // Set background colors
-        plot.setBackgroundPaint(Color.WHITE);
-        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
-        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
-        
-        // Customize the renderer
-        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-        plot.setRenderer(renderer);
-    }
-    
     
     /**
      * Clears all data from the chart.
@@ -77,8 +61,8 @@ public class GraphPanel extends JPanel {
      * Adds a series of data points to the chart.
      * 
      * @param seriesName The name of the series
-     * @param xValues Array of x-coordinates
-     * @param yValues Array of y-coordinates
+     * @param xValues
+     * @param yValues
      * @param showLines Whether to draw lines connecting points
      * @param showShapes Whether to show shapes at data points
      */
@@ -93,28 +77,12 @@ public class GraphPanel extends JPanel {
         int seriesIndex = dataset.getSeriesCount();
         dataset.addSeries(series);
         
-        // Configure the renderer for this series
         XYPlot plot = chart.getXYPlot();
         XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
         renderer.setSeriesLinesVisible(seriesIndex, showLines);
         renderer.setSeriesShapesVisible(seriesIndex, showShapes);
     }
     
-    /**
-     * Updates the chart title.
-     * 
-     * @param title New title for the chart
-     */
-    public void setChartTitle(String title) {
-        chart.setTitle(title);
-    }
-    
-
-    /**
-     * Displays Chebyshev interpolation results on the chart.
-     * 
-     * @param result ChebyshevResult containing data points and curve points
-     */
     public void displayChebyshevResult(ChebyshevInterpolation.ChebyshevResult result) {
         clearData();
         
@@ -149,6 +117,7 @@ public class GraphPanel extends JPanel {
 
     /**
      * Displays multiple polynomial orders on the same chart.
+     * I am making each polynomial a different color.
      * 
      * @param results Array of ChebyshevResults for different orders
      * @param allDataPoints All original data points to display

@@ -39,6 +39,7 @@ java -cp ".:../lib/*" NIV
 
 ## Program Overview
 
+Disclaimer: I am not sure that i handled the way lower-order Chebysheb polynomials using the Chebysheb nodes correctly.
 This program demonstrates Chebyshev polynomial interpolation with the following features:
 
 **Data Generation:**
@@ -47,12 +48,12 @@ This program demonstrates Chebyshev polynomial interpolation with the following 
 - Random y-values are generated in the range [-5, 5]
 
 **Point Merging:**
-- Points closer than a threshold distance are averaged together for numerical stability
+- Points closer than a threshold distance are averaged together
 - Uses Euclidean distance to detect close points
 - Outputs which points were merged and the resulting averaged point
 
 **Adaptive Order Testing:**
-- Tests polynomial orders from 1 up to n-1 (where n is the number of points)
+- Tests polynomial orders from 1 up to n-1
 - Lower orders use a subset of points and approximate the full dataset
 - Higher orders use more points and fit the data more closely
 - The highest order passes through all points exactly
