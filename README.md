@@ -39,7 +39,6 @@ java -cp ".:../lib/*" NIV
 
 ## Program Overview
 
-Disclaimer: I am not sure that i handled the way lower-order Chebysheb polynomials using the Chebysheb nodes correctly.
 This program demonstrates Chebyshev polynomial interpolation with the following features:
 
 **Data Generation:**
